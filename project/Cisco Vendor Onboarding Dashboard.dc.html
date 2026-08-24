@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+  body { margin: 0; background: oklch(97.3% 0.004 255); font-family: Helvetica, Arial, sans-serif; }
+  * { box-sizing: border-box; }
+  select { font-family: inherit; }
+</style>
+</helmet>
+<div style="max-width:1600px;margin:0 auto;padding:28px 40px 60px;color:oklch(22% 0.01 255);font-variant-numeric:tabular-nums;">
+
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;">
+    <div>
+      <div style="font-size:20px;font-weight:700;letter-spacing:-0.01em;">Software Center — 3rd Party Vendor Onboarding</div>
+      <div style="font-size:13px;color:oklch(48% 0.01 255);margin-top:2px;">Pipeline visibility · Executive dashboard</div>
+    </div>
+    <div style="text-align:right;font-size:12px;color:oklch(52% 0.01 255);line-height:1.6;">
+      <div>Data last refreshed: <span style="color:oklch(30% 0.01 255);font-weight:600;">Aug 14, 2026, 7:00 AM</span></div>
+      <div>Update compliance: <span style="color:oklch(58% 0.13 148);font-weight:600;">91%</span></div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:4px;border-bottom:1px solid oklch(90% 0.006 255);margin-bottom:20px;">
+    <div style="padding:10px 16px;font-size:14px;font-weight:600;color:oklch(52% 0.15 255);border-bottom:2px solid oklch(52% 0.15 255);">Executive View</div>
+    <div style="padding:10px 16px;font-size:14px;font-weight:500;color:oklch(72% 0.008 255);cursor:default;" title="Coming next">Bottleneck View</div>
+    <div style="padding:10px 16px;font-size:14px;font-weight:500;color:oklch(72% 0.008 255);cursor:default;" title="Coming next">Project Detail</div>
+  </div>
+
+  <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:#fff;border:1px solid oklch(90% 0.006 255);border-radius:6px;padding:10px 16px;margin-bottom:22px;">
+    <span style="font-size:11px;font-weight:600;color:oklch(52% 0.01 255);text-transform:uppercase;letter-spacing:0.04em;">Filters</span>
+    <select value="{{ quarter }}" onChange="{{ onQuarterChange }}" style="font-size:13px;padding:6px 8px;border:1px solid oklch(88% 0.006 255);border-radius:4px;background:oklch(98.5% 0.002 255);color:oklch(25% 0.01 255);">
+      <option value="All">Quarter: All</option>
+      <option value="Q3">Quarter: Q3 (Mar–May)</option>
+      <option value="Q4">Quarter: Q4 (Jun–Aug)</option>
+    </select>
+    <select value="{{ projectType }}" onChange="{{ onTypeChange }}" style="font-size:13px;padding:6px 8px;border:1px solid oklch(88% 0.006 255);border-radius:4px;background:oklch(98.5% 0.002 255);color:oklch(25% 0.01 255);">
+      <option value="All">Project Type: All</option>
+      <option value="New NPI">New NPI</option>
+      <option value="Sustaining NPI">Sustaining NPI</option>
+      <option value="Price Change">Price Change</option>
+      <option value="EOL">EOL</option>
+      <option value="EOS">EOS</option>
+    </select>
+    <select value="{{ portfolio }}" onChange="{{ onPortfolioChange }}" style="font-size:13px;padding:6px 8px;border:1px solid oklch(88% 0.006 255);border-radius:4px;background:oklch(98.5% 0.002 255);color:oklch(25% 0.01 255);">
+      <option value="All">Portfolio: All</option>
+      <option value="S+ Projects">S+ Projects</option>
+      <option value="EA 3rd Party SW">EA 3rd Party SW</option>
+      <option value="Not S+">Not S+</option>
+      <option value="Special Projects">Special Projects</option>
+    </select>
+    <select value="{{ poc }}" onChange="{{ onPocChange }}" style="font-size:13px;padding:6px 8px;border:1px solid oklch(88% 0.006 255);border-radius:4px;background:oklch(98.5% 0.002 255);color:oklch(25% 0.01 255);">
+      <option value="All">BU Ops POC: All</option>
+      <option value="J. Alvarez">J. Alvarez</option>
+      <option value="M. Chen">M. Chen</option>
+      <option value="R. Singh">R. Singh</option>
+    </select>
+    <sc-if value="{{ filtersActive }}" hint-placeholder-val="{{ false }}">
+      <button onClick="{{ onResetFilters }}" style="margin-left:auto;font-size:12px;color:oklch(52% 0.15 255);background:none;border:none;cursor:pointer;font-weight:600;">Reset filters</button>
+    </sc-if>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:16px;margin-bottom:24px;">
+    <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="5">
+      <div style="background:#fff;border:1px solid oklch(90% 0.006 255);border-radius:6px;padding:16px 18px;">
+        <div style="font-size:32px;font-weight:700;letter-spacing:-0.01em;line-height:1;">{{ k.value }}</div>
+        <div style="font-size:12.5px;color:oklch(48% 0.01 255);margin-top:8px;">{{ k.label }}</div>
+        <div style="font-size:12px;margin-top:6px;font-weight:600;color:{{ k.trendColor }};">{{ k.trend }}</div>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="background:#fff;border:1px solid oklch(90% 0.006 255);border-radius:6px;padding:20px 24px 16px;margin-bottom:24px;">
+    <div style="font-size:14px;font-weight:700;">Pipeline by stage</div>
+    <div style="font-size:12px;color:oklch(52% 0.01 255);margin-top:2px;margin-bottom:18px;">How many projects are sitting in each stage right now, and where is health at risk?</div>
+    <div style="display:flex;align-items:flex-end;gap:8px;height:190px;border-bottom:1px solid oklch(90% 0.006 255);padding-bottom:0;">
+      <sc-for list="{{ stageFlow }}" as="s" hint-placeholder-count="12">
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;">
+          <div style="font-size:13px;font-weight:700;margin-bottom:4px;color:{{ s.textColor }};">{{ s.count }}</div>
+          <div style="width:60%;border-radius:2px 2px 0 0;height:{{ s.barPx }}px;background:{{ s.color }};"></div>
+        </div>
+      </sc-for>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:8px;">
+      <sc-for list="{{ stageFlow }}" as="s" hint-placeholder-count="12">
+        <div style="flex:1;text-align:center;font-size:10.5px;color:oklch(50% 0.01 255);line-height:1.25;">{{ s.name }}</div>
+      </sc-for>
+    </div>
+    <div style="display:flex;gap:18px;margin-top:16px;padding-top:12px;border-top:1px solid oklch(93% 0.004 255);font-size:11px;color:oklch(52% 0.01 255);">
+      <div style="display:flex;align-items:center;gap:6px;"><span style="width:9px;height:9px;border-radius:2px;background:oklch(58% 0.13 148);display:inline-block;"></span>Within SLA</div>
+      <div style="display:flex;align-items:center;gap:6px;"><span style="width:9px;height:9px;border-radius:2px;background:oklch(70% 0.15 75);display:inline-block;"></span>Approaching SLA</div>
+      <div style="display:flex;align-items:center;gap:6px;"><span style="width:9px;height:9px;border-radius:2px;background:oklch(56% 0.19 25);display:inline-block;"></span>Over SLA</div>
+      <div style="display:flex;align-items:center;gap:6px;"><span style="width:9px;height:9px;border-radius:2px;background:oklch(80% 0.006 255);display:inline-block;"></span>Empty</div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:20px;">
+    <div style="background:#fff;border:1px solid oklch(90% 0.006 255);border-radius:6px;padding:20px 24px;">
+      <div style="font-size:14px;font-weight:700;">Pipeline flow by month</div>
+      <div style="font-size:12px;color:oklch(52% 0.01 255);margin-top:2px;margin-bottom:14px;">Is the pipeline filling faster than it drains?</div>
+      <svg viewBox="0 0 480 200" style="width:100%;height:200px;overflow:visible;">
+        <line x1="30" y1="20" x2="30" y2="150" stroke="oklch(90% 0.006 255)" stroke-width="1"></line>
+        <line x1="30" y1="150" x2="470" y2="150" stroke="oklch(90% 0.006 255)" stroke-width="1"></line>
+        <text x="24" y="153" font-size="9" fill="oklch(60% 0.008 255)" text-anchor="end">0</text>
+        <text x="24" y="88" font-size="9" fill="oklch(60% 0.008 255)" text-anchor="end">4</text>
+        <text x="24" y="24" font-size="9" fill="oklch(60% 0.008 255)" text-anchor="end">8</text>
+        <sc-for list="{{ monthly }}" as="m" hint-placeholder-count="6">
+          <g opacity="{{ m.opacity }}">
+            <rect x="{{ m.enteredX }}" y="{{ m.enteredY }}" width="16" height="{{ m.enteredH }}" fill="oklch(52% 0.15 255)" rx="1"></rect>
+            <rect x="{{ m.exitedX }}" y="{{ m.exitedY }}" width="16" height="{{ m.exitedH }}" fill="oklch(75% 0.006 255)" rx="1"></rect>
+            <text x="{{ m.labelX }}" y="165" font-size="10" fill="oklch(50% 0.01 255)" text-anchor="middle">{{ m.label }}</text>
+          </g>
+        </sc-for>
+        <polyline points="{{ wipLinePoints }}" fill="none" stroke="oklch(30% 0.01 255)" stroke-width="1.75"></polyline>
+        <sc-for list="{{ monthly }}" as="m" hint-placeholder-count="6">
+          <circle cx="{{ m.wipX }}" cy="{{ m.wipY }}" opacity="{{ m.opacity }}" r="3" fill="oklch(30% 0.01 255)"></circle>
+        </sc-for>
+      </svg>
+      <div style="display:flex;gap:18px;margin-top:6px;padding-top:12px;border-top:1px solid oklch(93% 0.004 255);font-size:11px;color:oklch(52% 0.01 255);">
+        <div style="display:flex;align-items:center;gap:6px;"><span style="width:9px;height:9px;border-radius:2px;background:oklch(52% 0.15 255);display:inline-block;"></span>Entered</div>
+        <div style="display:flex;align-items:center;gap:6px;"><span style="width:9px;height:9px;border-radius:2px;background:oklch(75% 0.006 255);display:inline-block;"></span>Exited</div>
+        <div style="display:flex;align-items:center;gap:6px;"><span style="width:14px;height:2px;background:oklch(30% 0.01 255);display:inline-block;margin-top:4px;"></span>Active WIP</div>
+      </div>
+    </div>
+
+    <div style="background:#fff;border:1px solid oklch(90% 0.006 255);border-radius:6px;padding:20px 24px;">
+      <div style="font-size:14px;font-weight:700;">Portfolio mix</div>
+      <div style="font-size:12px;color:oklch(52% 0.01 255);margin-top:2px;margin-bottom:8px;">What kinds of projects make up the pipeline?</div>
+      <div style="display:flex;align-items:center;gap:18px;">
+        <svg viewBox="0 0 160 160" style="width:150px;height:150px;flex-shrink:0;">
+          <g transform="translate(80,80) rotate(-90)">
+            <sc-for list="{{ donutSegments }}" as="d" hint-placeholder-count="4">
+              <circle cx="0" cy="0" r="60" fill="none" stroke="{{ d.color }}" stroke-width="26" stroke-dasharray="{{ d.dasharray }}" stroke-dashoffset="{{ d.dashoffset }}"></circle>
+            </sc-for>
+          </g>
+          <text x="80" y="76" text-anchor="middle" font-size="22" font-weight="700" fill="oklch(22% 0.01 255)">{{ donutTotal }}</text>
+          <text x="80" y="94" text-anchor="middle" font-size="10" fill="oklch(52% 0.01 255)">projects</text>
+        </svg>
+        <div style="display:flex;flex-direction:column;gap:9px;">
+          <sc-for list="{{ donutSegments }}" as="d" hint-placeholder-count="4">
+            <div style="display:flex;align-items:center;gap:8px;font-size:12.5px;">
+              <span style="width:9px;height:9px;border-radius:2px;display:inline-block;background:{{ d.color }};"></span>
+              <span style="color:oklch(30% 0.01 255);">{{ d.name }}</span>
+              <span style="color:oklch(52% 0.01 255);margin-left:auto;padding-left:10px;">{{ d.value }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { quarter: 'All', projectType: 'All', portfolio: 'All', poc: 'All' };
+
+  healthColors = {
+    green: 'oklch(58% 0.13 148)', amber: 'oklch(70% 0.15 75)',
+    red: 'oklch(56% 0.19 25)', grey: 'oklch(80% 0.006 255)'
+  };
+  healthText = {
+    green: 'oklch(45% 0.1 148)', amber: 'oklch(55% 0.13 75)',
+    red: 'oklch(50% 0.17 25)', grey: 'oklch(60% 0.006 255)'
+  };
+
+  baseStages = [
+    { name: 'Legal', count: 2, health: 'green' },
+    { name: 'Documentation', count: 3, health: 'amber' },
+    { name: 'PID Prep', count: 1, health: 'green' },
+    { name: 'NPI Kickoff', count: 4, health: 'red' },
+    { name: 'PID Creation', count: 2, health: 'green' },
+    { name: 'PID Setups', count: 3, health: 'amber' },
+    { name: 'Supply Chain', count: 1, health: 'green' },
+    { name: 'CCW Config', count: 2, health: 'green' },
+    { name: 'Fulfillment', count: 1, health: 'green' },
+    { name: 'ORR', count: 2, health: 'red' },
+    { name: 'Orderable CCW', count: 1, health: 'green' },
+    { name: 'Post Orderable', count: 0, health: 'grey' }
+  ];
+
+  baseMonthly = [
+    { label: 'Mar', q: 'Q3', in: 5, out: 3, wip: 18 },
+    { label: 'Apr', q: 'Q3', in: 4, out: 5, wip: 17 },
+    { label: 'May', q: 'Q3', in: 6, out: 2, wip: 21 },
+    { label: 'Jun', q: 'Q4', in: 3, out: 4, wip: 20 },
+    { label: 'Jul', q: 'Q4', in: 7, out: 4, wip: 23 },
+    { label: 'Aug', q: 'Q4', in: 2, out: 3, wip: 22 }
+  ];
+
+  basePortfolio = [
+    { name: 'S+ Projects', value: 9, color: 'oklch(40% 0.08 255)' },
+    { name: 'EA 3rd Party SW', value: 6, color: 'oklch(52% 0.08 255)' },
+    { name: 'Not S+', value: 4, color: 'oklch(66% 0.06 255)' },
+    { name: 'Special Projects', value: 3, color: 'oklch(80% 0.03 255)' }
+  ];
+
+  typeFactor = { 'All': 1, 'New NPI': 0.7, 'Sustaining NPI': 0.32, 'Price Change': 0.14, 'EOL': 0.1, 'EOS': 0.1 };
+  portfolioFactor = { 'All': 1, 'S+ Projects': 0.45, 'EA 3rd Party SW': 0.3, 'Not S+': 0.2, 'Special Projects': 0.15 };
+  pocFactor = { 'All': 1, 'J. Alvarez': 0.4, 'M. Chen': 0.3, 'R. Singh': 0.22 };
+
+  getFactor() {
+    const fs = [this.typeFactor[this.state.projectType], this.portfolioFactor[this.state.portfolio], this.pocFactor[this.state.poc]]
+      .filter(f => f !== 1);
+    return fs.length ? Math.min(...fs) : 1;
+  }
+
+  renderVals() {
+    const factor = this.getFactor();
+    const maxBar = 4;
+
+    const stageFlow = this.baseStages.map(s => {
+      const count = Math.round(s.count * factor);
+      const health = count === 0 ? 'grey' : s.health;
+      return {
+        name: s.name, count,
+        color: this.healthColors[health],
+        textColor: this.healthText[health],
+        barPx: count === 0 ? 4 : Math.max(6, (count / maxBar) * 150)
+      };
+    });
+
+    const activeProjects = Math.round(22 * factor);
+    const enteredQ = Math.round(7 * factor);
+    const wentOrderable = Math.round(4 * factor);
+    const medianDays = Math.round(96 * (1 + (1 - factor) * 0.12));
+    const pastTargetPct = Math.round(27 * factor + (1 - factor) * 18);
+    const pastTargetCount = Math.max(0, Math.round(activeProjects * pastTargetPct / 100));
+
+    const kpis = [
+      { label: 'Active Projects in Pipeline', value: activeProjects, trend: '▲ 3 vs last quarter', trendColor: 'oklch(58% 0.13 148)' },
+      { label: 'Entered This Quarter', value: enteredQ, trend: '', trendColor: 'oklch(52% 0.01 255)' },
+      { label: 'Went Orderable This Quarter', value: wentOrderable, trend: '', trendColor: 'oklch(52% 0.01 255)' },
+      { label: 'Median Days to Orderable', value: medianDays, trend: '▲ 11, worsening', trendColor: 'oklch(56% 0.19 25)' },
+      { label: 'Past Target Date', value: pastTargetPct + '%', trend: pastTargetCount + ' of ' + activeProjects, trendColor: 'oklch(52% 0.01 255)' }
+    ];
+
+    // monthly chart geometry
+    const barMax = 8, wipMax = 25;
+    const plotTop = 20, plotBottom = 150, plotH = plotBottom - plotTop;
+    const groupW = 440 / 6;
+    const monthly = this.baseMonthly.map((m, i) => {
+      const gx = 30 + i * groupW + groupW / 2;
+      const enteredH = (m.in / barMax) * plotH;
+      const exitedH = (m.out / barMax) * plotH;
+      const opacity = (this.state.quarter === 'All' || this.state.quarter === m.q) ? 1 : 0.22;
+      return {
+        label: m.label, opacity,
+        enteredX: gx - 20, enteredY: plotBottom - enteredH, enteredH,
+        exitedX: gx + 4, exitedY: plotBottom - exitedH, exitedH,
+        labelX: gx, wipX: gx - 8, wipY: plotBottom - (m.wip / wipMax) * plotH
+      };
+    });
+    const wipLinePoints = monthly.map(m => `${m.wipX},${m.wipY}`).join(' ');
+
+    const donutTotal = this.basePortfolio.reduce((a, b) => a + b.value, 0);
+    const circumference = 2 * Math.PI * 60;
+    let cum = 0;
+    const donutSegments = this.basePortfolio.map(d => {
+      const len = (d.value / donutTotal) * circumference;
+      const seg = { name: d.name, value: d.value, color: d.color, dasharray: `${len} ${circumference - len}`, dashoffset: -cum };
+      cum += len;
+      return seg;
+    });
+
+    const filtersActive = this.state.quarter !== 'All' || this.state.projectType !== 'All' || this.state.portfolio !== 'All' || this.state.poc !== 'All';
+
+    return {
+      quarter: this.state.quarter, projectType: this.state.projectType, portfolio: this.state.portfolio, poc: this.state.poc,
+      onQuarterChange: e => this.setState({ quarter: e.target.value }),
+      onTypeChange: e => this.setState({ projectType: e.target.value }),
+      onPortfolioChange: e => this.setState({ portfolio: e.target.value }),
+      onPocChange: e => this.setState({ poc: e.target.value }),
+      onResetFilters: () => this.setState({ quarter: 'All', projectType: 'All', portfolio: 'All', poc: 'All' }),
+      filtersActive,
+      kpis, stageFlow, monthly, wipLinePoints,
+      donutSegments, donutTotal
+    };
+  }
+}
+
+</script>
+</body>
+</html>
