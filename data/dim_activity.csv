@@ -1,0 +1,50 @@
+stage_id,activity_name,task_group,typical_owner
+legal,Agreement Executed/Signed,,S+ Team
+legal,ECLM/CDP Assigned,,S+ Team
+legal,Price List Transmitted,,S+ Team
+legal,Vendor Onboarded into Cisco Supply Chain Systems,,S+ Team
+documentation,BUPM,,BUPM
+documentation,BUPM:  Orderability Date,,BUPM
+documentation,Cisco Business Case with 3-year Forecast,,BUPM
+documentation,Export Template Completed by Vendor,,BUPM
+documentation,Send to Vendor: SolutionsPlus Vendor User Guide,,BUPM
+documentation,Template: S+ Provisioning-CustSupport,,BUPM
+documentation,Vendor,,BUPM
+pid_prep,PF Created,,BU OPS
+pid_prep,Pricing Ops:  Uplifts = 20%,,BU OPS
+pid_prep,Product Hierarchy: PF-PT-PSG,,BU OPS
+pid_creation,BUC Approved Pricing,,BU OPS
+pid_creation,Created,eGenie Template,BU OPS
+pid_creation,Reviewed + Uploaded,eGenie Template,BU OPS
+pid_setups,CMT Case Created & EPR assigned,Classification,BU OPS + CE
+pid_setups,Export Classification,Classification,Gracieli
+pid_setups,Export Submitted into CMT Case for Review,Classification,BU OPS + CE
+pid_setups,Export Template Completed by Vendor,Classification,BU OPS + CE
+pid_setups,Tax Classification,Classification,BU OPS + CE
+pid_setups,CPDM Created,Rev Rec Setup,BU OPS + CE
+pid_setups,OA Setup,Rev Rec Setup,BU OPS + CE
+pid_setups,PID List Submitted into CPDM,Rev Rec Setup,BU OPS + CE
+pid_setups,RCL Created,Rev Rec Setup,BU OPS + CE
+supply_chain,ECO,,CE/NPPN
+supply_chain,RCE Setup,,CE/NPPN
+supply_chain,Royalty Template,,CE/NPPN
+ccw,Config Sheet,,CE/PDT
+ccw,Provide Screenshots for Ordering Guide,CCW Demontration,CE/PDT
+ccw,Vendor Business Case with Forecast,CFR,CE/PDT
+ccw,Config Rule Set-up & Validation,OWB Structure,CE/PDT
+fulfillment,GLO Template,3rd Party:  PAK Registration Setup,CE
+fulfillment,Jigsaw Setup,3rd Party:  PAK Registration Setup,CE
+fulfillment,SLT Mapping,3rd Party:  PAK Registration Setup,CE
+fulfillment,Auto-Provisioning,3rd Party:  SBP Provisioning Layer,CE
+fulfillment,Implementation with Vendor,3rd Party:  SBP Provisioning Layer,CE
+fulfillment,Manual Provioning:  Provisioning Interface,3rd Party:  SBP Provisioning Layer,CE
+fulfillment,Testing,3rd Party:  SBP Provisioning Layer,CE
+fulfillment,Smart License (SL) Mapping --> SEEM,Cisco Native License Setup,CE
+orr,Ordering Guide Posted,,"CE, Rafay"
+orr,Test Order Generated,Test Order,"CE, Rafay"
+orr,Test Order SubID closed,Test Order,"CE, Rafay"
+orderable,P2P,,CE
+orderable,BU Operations,Approvals,CE
+orderable,BUPM,Approvals,CE
+orderable,NPPM,Approvals,CE
+post_orderable,RCE RRM Reviewed/Confirmed,,"CE, BU OPS"

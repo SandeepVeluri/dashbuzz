@@ -1,25 +1,118 @@
-# CODING AGENTS: READ THIS FIRST
+# Offer Portfolio Status Dashboard
 
-This is a **handoff bundle** from Claude Design (claude.ai/design).
+A live dashboard for Cisco Compute BU's third-party software vendor
+onboarding pipeline, hosted on GitHub Pages -- no server, no database.
+Analysts report updates in plain language to an AI chat assistant; the
+dashboard rebuilds itself automatically within a minute or two of any
+update landing in this repo.
 
-A user mocked up designs in HTML/CSS/JS using an AI design tool, then exported this bundle so a coding agent can implement the designs for real.
+```
+Analyst has a conversation      AI assistant (Codex/ChatGPT,       GitHub Actions        GitHub Pages
+(email / meeting / verbal) ──►  or Claude) reads               ──►  rebuilds        ──►  serves the
+                                 docs/INTAKE_PROTOCOL.md,             site/index.html         static dashboard
+                                 resolves the update against          from data/*.csv
+                                 data/dim_project.csv +
+                                 data/dim_stage.csv, shows a
+                                 one-line draft, and on
+                                 confirmation calls
+                                 scripts/log_update.py, which
+                                 validates + derives + commits
+                                 to data/events.csv
+```
 
-## What you should do — IMPORTANT
+## Repo layout
 
-**Read the chat transcripts first.** There are 2 chat transcript(s) in `chats/`. The transcripts show the full back-and-forth between the user and the design assistant — they tell you **what the user actually wants** and **where they landed** after iterating. Don't skip them. The final HTML files are the output, but the chat is where the intent lives.
+```
+data/
+  dim_project.csv        one row per offer -- vendor, type, portfolio, POCs, target date
+  dim_stage.csv           the 12 pipeline stages -- SLA days, dependencies, applicability by project type
+  dim_activity.csv        reference list of sub-activities per stage, used for fuzzy matching only
+  events.csv               the event log -- the only table anyone (human or AI) appends to
+  child_tasks_seed.csv     phase-1 backfill of sub-activity status (see "What's deliberately deferred" below)
+scripts/
+  derive.py                shared derivation logic: health/SLA, dependency checks, progress, blocked register
+  log_update.py             the intake CLI an AI assistant calls to append a validated event
+  build_dashboard.py        regenerates site/index.html from data/*.csv
+templates/
+  dashboard_template.html   the dashboard shell (visual design), with a data placeholder the build fills in
+docs/
+  INTAKE_PROTOCOL.md         the instructions doc an AI assistant loads to become "the form"
+.github/workflows/deploy.yml  builds + deploys to GitHub Pages on every push to data/**
+design-handoff/               the original Claude Design export this dashboard's look was built from
+```
 
-**Read `project/Offer Portfolio Status Dashboard.html` in full.** The user had this file open when they triggered the handoff, so it's almost certainly the primary design they want built. Read it top to bottom — don't skim. Then **follow its imports**: open every file it pulls in (shared components, CSS, scripts) so you understand how the pieces fit together before you start implementing.
+## How an update actually gets in
 
-**If anything is ambiguous, ask the user to confirm before you start implementing.** It's much cheaper to clarify scope up front than to build the wrong thing.
+There is no web form. An analyst opens a chat with whatever AI assistant
+they have access to (Codex/ChatGPT is what this was built for; Claude works
+identically) in a project that has `docs/INTAKE_PROTOCOL.md` loaded as
+instructions and shell access to a clone of this repo, and just talks:
 
-## About the design files
+> "Legal signed off on Rafay yesterday, and Quali's PID setups is
+> basically done, just waiting on export review."
 
-The design medium is **HTML/CSS/JS** — these are prototypes, not production code. Your job is to **recreate them pixel-perfectly** in whatever technology makes sense for the target codebase (React, Vue, native, whatever fits). Match the visual output; don't copy the prototype's internal structure unless it happens to fit.
+The assistant resolves that against the real offer/stage lists, shows a
+one-line draft per event, and -- once the analyst confirms -- runs:
 
-**Don't render these files in a browser or take screenshots unless the user asks you to.** Everything you need — dimensions, colors, layout rules — is spelled out in the source. Read the HTML and CSS directly; a screenshot won't tell you anything they don't.
+```
+python scripts/log_update.py --batch-json updates.json --commit --push
+```
 
-## Bundle contents
+`log_update.py` validates the input, computes what it implies (health,
+dependency consistency, progress), and is the *only* thing that ever writes
+to `data/events.csv`. See `docs/INTAKE_PROTOCOL.md` for the full contract.
 
-- `README.md` — this file
-- `chats/` — conversation transcripts (read these!)
-- `project/` — the `Dashboard tab overview` project files (HTML prototypes, assets, components)
+Pushing to `main` triggers `.github/workflows/deploy.yml`, which runs
+`scripts/build_dashboard.py` and deploys the result to GitHub Pages. Nothing
+in that path needs a server, a database, or IT-provisioned infrastructure --
+GitHub Actions is the backend.
+
+## Running the build locally
+
+```
+python3 scripts/build_dashboard.py    # writes site/index.html
+python3 -m http.server --directory site 8000
+```
+
+## One-time repo setup
+
+1. Settings -> Pages -> Build and deployment source: **GitHub Actions**.
+2. Restrict write access to the 2-3 Sales Ops analysts who submit updates
+   (and whatever token/account their AI assistant sessions push with);
+   everyone else gets read/Pages access only.
+3. Confirm with your GitHub admin that Pages is enabled for private/internal
+   repos on this Cisco GitHub Enterprise account -- it's an org-level
+   setting on some plans.
+4. `data/dim_project.csv` and `data/dim_stage.csv` are edited by hand, rarely
+   (a new offer onboarded, an SLA renegotiated) -- never by the intake
+   assistant.
+
+## Why an event log instead of an editable status sheet
+
+The dashboard used to be backed by a wide tracker: one column per vendor,
+values overwritten in place on every update. That shape can answer "where is
+Rafay today" but not "how long does Legal usually take" or "how many
+projects entered last quarter," because **history is destroyed on every
+edit**. `data/events.csv` is append-only -- one row every time a stage
+starts, completes, or gets blocked -- so cycle time, throughput, and
+bottlenecks all fall out of the same table for free, and nothing a person
+typed six weeks ago silently disappears.
+
+## What's deliberately deferred
+
+- **Sub-activity (child task) tracking** stays a periodic snapshot
+  (`data/child_tasks_seed.csv`), not a second event log. Instrumenting ~50
+  activities per stage before stage-level compliance is solid would cost more
+  analyst time than it returns. Revisit once stage-level updates are reliably
+  >90% current.
+- **A second "bottleneck" view** (chokepoint bubble chart, cycle-time vs SLA,
+  cumulative flow) becomes cheap once a few months of real event history
+  exist, but isn't built here -- the dashboard shipped in this repo is the
+  Gantt/milestone view the design was actually signed off on. `derive.py`
+  already computes everything that view would need (`blocked_register`,
+  per-stage health) if and when it's wanted.
+- **Stage dependencies and SLA days in `data/dim_stage.csv` are proposals**,
+  not confirmed process. Validate them with the BU Ops leads before treating
+  the health colours as gospel -- see the blueprint in
+  `design-handoff/project/uploads/Cisco_SW_Vendor_Onboarding_Dashboard_Blueprint.md`
+  section 8 for the full list of assumptions.

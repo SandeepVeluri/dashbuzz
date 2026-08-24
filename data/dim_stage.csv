@@ -1,0 +1,13 @@
+stage_id,stage_no,stage_name,display_name,track,predecessor_ids,sla_days,applicable_new_npi,applicable_sustaining,applicable_price_change,applicable_eol_eos,notes
+legal,1,Legal,Legal,Commercial,,20,true,false,false,false,Required mainly for S+ portfolio offers; mark N/A for non-S+ unless Legal actually opens a track
+documentation,2,Documentation,Documentation,Product,,15,true,true,false,true,Runs in parallel with Legal and PID Preparations
+pid_prep,3,PID Preparations,PID Preparations,Product,,10,true,true,false,false,Runs in parallel with Legal and Documentation
+npi_kickoff,4,NPI Kickoff,NPI Kickoff / Launch / Level Webex with entire Team,Governance,"legal;documentation;pid_prep",5,true,true,false,false,Convergence gate 1 -- queues form here
+pid_creation,5,PID Creation,PID Creation,Product,npi_kickoff,12,true,true,false,false,
+pid_setups,6,PID Setups,PID Setups,Product,pid_creation,15,true,true,true,false,
+supply_chain,7,Supply Chain Setup,Supply Chain,Supply Chain,pid_creation,12,true,true,false,true,
+ccw,8,CCW Config & Testing,CCW,Systems,"pid_setups;supply_chain",12,true,true,true,true,Convergence gate 2 -- queues form here
+fulfillment,9,Fulfillment,Fulfillment,Systems,pid_setups,15,true,true,false,false,
+orr,10,ORR,ORR (Orderability Readiness Review),Gate,"ccw;fulfillment",7,true,true,false,false,
+orderable,11,Orderable in Production CCW,Orderable in Production CCW,Gate,orr,5,true,true,true,true,Commercially meaningful exit -- pipeline "out" date
+post_orderable,12,Post Orderable,Post Orderable,Closeout,orderable,10,true,true,true,true,Administrative tail after commercial exit
