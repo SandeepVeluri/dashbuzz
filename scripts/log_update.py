@@ -49,11 +49,19 @@ class ValidationError(Exception):
     pass
 
 
-def _closest(name: str, candidates: dict[str, str], label: str, cutoff: float = 0.6) -> str:
-    """candidates: {canonical_id: display_text}. Returns canonical_id or raises."""
+def _closest(name: str, candidates: dict[str, str], label: str, cutoff: float = 0.6,
+             aliases: dict[str, list[str]] | None = None) -> str:
+    """candidates: {canonical_id: display_text} used for the error message and as the
+    default fuzzy-match target. aliases: optional {canonical_id: [alt names]} -- every
+    alias is checked for an exact (case-insensitive) match before falling back to fuzzy
+    matching on the display text, so a stage's short name matches even when the display
+    text shown to the analyst is a longer "Full Name (Short Name)" combination.
+    Returns canonical_id or raises.
+    """
     name_l = name.strip().lower()
     for cid, text in candidates.items():
-        if text.strip().lower() == name_l or cid.lower() == name_l:
+        alts = [text, cid, *aliases.get(cid, [])] if aliases else [text, cid]
+        if name_l in {a.strip().lower() for a in alts}:
             return cid
     matches = difflib.get_close_matches(name_l, [t.lower() for t in candidates.values()], n=3, cutoff=cutoff)
     if len(matches) == 1:
@@ -78,7 +86,8 @@ def resolve_stage(stages: list[derive.Stage], project_type: str, name: str) -> d
     applicable = [s for s in stages if derive.is_applicable(s, project_type)]
     by_id = {s.stage_id: f"{s.stage_name} ({s.display_name})" if s.stage_name != s.display_name else s.stage_name
              for s in applicable}
-    sid = _closest(name, by_id, "stage")
+    aliases = {s.stage_id: [s.stage_name, s.display_name] for s in applicable}
+    sid = _closest(name, by_id, "stage", aliases=aliases)
     return next(s for s in applicable if s.stage_id == sid)
 
 
