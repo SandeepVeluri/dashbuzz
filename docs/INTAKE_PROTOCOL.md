@@ -19,6 +19,74 @@ notes, a one-line Slack-style update -- into one or more calls to
 draft and getting a yes. You do the language understanding. The script does
 all the arithmetic. Never do the arithmetic yourself.
 
+## Proactive coverage -- do not just wait to be told
+
+The analyst will not reliably remember every open item on their own. **Do
+not treat your job as "process whatever they said."** Treat it as "make sure
+nothing active goes silently unreported," which means driving the
+conversation, not just parsing it.
+
+At the **start of every session**, before anything else:
+
+```
+python scripts/log_update.py --staleness-report --days 7
+```
+
+This lists every active offer with days since its last event, worst first,
+flagging anything over the threshold. Open with something like: *"Before we
+start -- Rubrik and Cohesity haven't had an update in a while. Anything to
+report on those, or should I log 'No Change' for now?"* Don't bury this in
+a wall of text; lead with it.
+
+At the **end of every session** (the analyst says something like "that's
+it" / "done for now" / goes quiet after their last update), run the
+staleness report again and check: did today's conversation actually cover
+every offer that was flagged at the start? If not, ask about the ones that
+were missed before ending -- a quick "anything on Qumulo or NVIDIA today?"
+takes ten seconds and is exactly what prevents a stalled project and an
+unreported project from looking identical on the dashboard.
+
+If the analyst explicitly has nothing to report on a flagged offer, log it
+as `--event-type "No Change"` rather than silently skipping it -- "confirmed
+nothing changed" and "never asked" must stay distinguishable in the data.
+
+**Within a single update**, don't accept a partial thought as done. If the
+analyst says "Quali's blocked" and stops, you're still missing which stage
+and why -- ask, don't draft a command with guessed values. The one-sentence
+draft you show back (rule 4 below) is itself a completeness check: if you
+can't write a clean one-liner without a placeholder in it, you're missing a
+required field, and the retry loop in `--dry-run` output is your evidence
+the input is complete enough to commit.
+
+## Answering "where does X stand?" -- the in-chat mini-dashboard
+
+The analyst can ask this at any time, mid-conversation, with no update in
+progress. Answer it by running (nothing is written):
+
+```
+python scripts/log_update.py --status --project "<offer>"
+```
+
+Relay the stage-by-stage breakdown conversationally rather than pasting the
+raw table -- e.g. "Rubrik's 50% through, on track, next up is Supply Chain."
+Run it with no `--project` to get every active offer at once if the analyst
+asks for a full portfolio check-in.
+
+## Fixing a mistake -- there is no delete or overwrite
+
+`data/events.csv` is append-only on purpose (see README "Why an event log
+instead of an editable status sheet") -- never try to edit a past row by
+hand. If the analyst says something they reported earlier was wrong (wrong
+date, wrong stage, wrong project), log a new event with the correct values
+and pass `--correction-of <event_id>` pointing at the row being fixed. The
+corrected event naturally becomes the current truth (the dashboard always
+uses the latest event per stage); `--correction-of` just keeps the "why did
+this change" trail visible to anyone reading `events.csv` later. You can
+find the event_id to correct by asking the analyst which offer/stage it was
+and reading the relevant rows, or by running `--status` on that offer and
+cross-referencing dates -- if you can't confidently identify which event
+they mean, ask rather than guess.
+
 ## Hard rules
 
 1. **Never write to `data/events.csv` except through `scripts/log_update.py`.**

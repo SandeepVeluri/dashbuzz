@@ -42,7 +42,7 @@ EVENTS_PATH = REPO_ROOT / "data" / "events.csv"
 EVENT_FIELDS = ["event_id", "timestamp", "project_id", "stage_id", "event_type", "status_after",
                  "pct_complete", "planned_end_date", "actual_date", "stage_owner", "blocker_flag",
                  "blocker_reason", "blocker_owner", "expected_unblock_date", "comment",
-                 "submitted_by", "source"]
+                 "submitted_by", "source", "correction_of"]
 
 
 class ValidationError(Exception):
@@ -138,6 +138,7 @@ def build_row(events: list[dict], project: derive.Project, stage: derive.Stage, 
         comment=(args.comment or "")[:200],
         submitted_by=args.submitted_by,
         source=f"Logged via log_update.py by {args.submitted_by} on {now}.",
+        correction_of=getattr(args, "correction_of", None) or "",
     )
 
 
@@ -148,11 +149,12 @@ def append_events(rows: list[dict]) -> None:
             w.writerow(r)
 
 
-def print_consequences(project: derive.Project, stages: list[derive.Stage], events: list[dict]) -> None:
+def print_consequences(project: derive.Project, stages: list[derive.Stage], events: list[dict],
+                        heading: str = "after this update") -> None:
     today = dt.date.today()
     rollup = derive.rollup_project(project, stages, events, today)
     warnings = derive.dependency_warnings(project, rollup["applicable_stages"], rollup["stage_states"])
-    print(f"\n--- {project.offer} ({project.project_type}) after this update ---")
+    print(f"\n--- {project.offer} ({project.project_type}) {heading} ---")
     print(f"Overall status: {rollup['status']}  |  Health: {rollup['health']}  |  "
           f"Progress: {round(rollup['progress'] * 100)}%")
     for s in rollup["applicable_stages"]:
@@ -165,6 +167,31 @@ def print_consequences(project: derive.Project, stages: list[derive.Stage], even
     print()
 
 
+def print_status(project: derive.Project, stages: list[derive.Stage], events: list[dict]) -> None:
+    """Read-only 'what does this offer look like right now' -- the in-chat
+    mini-dashboard. Same rendering as print_consequences, but usable without
+    staging a new event, so an analyst can ask 'where does X stand?' any time."""
+    print_consequences(project, stages, events, heading="current status")
+
+
+def print_staleness_report(projects: list[derive.Project], events: list[dict], days: int) -> None:
+    """Drives proactive check-ins: 'you haven't updated X in N days, anything
+    to report?' instead of only reacting to what the analyst happens to bring
+    up. See docs/INTAKE_PROTOCOL.md 'Proactive coverage'."""
+    today = dt.date.today()
+    report = derive.staleness_report(projects, events, today)
+    print(f"--- Staleness report as of {today.isoformat()} (flagging >{days} days) ---")
+    for r in report:
+        if r["days_since"] is None:
+            flag = "  <-- NEVER REPORTED"
+            since = "never"
+        else:
+            flag = "  <-- ASK ABOUT THIS ONE" if r["days_since"] > days else ""
+            since = f"{r['days_since']}d ago ({r['last_event_date'].isoformat()})"
+        print(f"  {r['offer']:<16} last update: {since}{flag}")
+    print()
+
+
 def git(*args: str) -> None:
     subprocess.run(["git", *args], cwd=REPO_ROOT, check=True)
 
@@ -173,6 +200,16 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--list-projects", action="store_true")
     ap.add_argument("--list-stages", action="store_true", help="requires --project")
+    ap.add_argument("--status", action="store_true",
+                     help="read-only: print current stage-by-stage status for --project "
+                          "(all active projects if --project omitted). Nothing is written.")
+    ap.add_argument("--staleness-report", action="store_true",
+                     help="read-only: which active projects haven't had an event in --days "
+                          "days, worst first. Use this at the start of a session, or before "
+                          "ending one, to ask about projects the analyst didn't bring up.")
+    ap.add_argument("--days", type=int, default=7, help="staleness threshold for --staleness-report")
+    ap.add_argument("--correction-of", help="event_id this event corrects (see docs/INTAKE_PROTOCOL.md "
+                                             "'Fixing a mistake'). Optional, audit-trail only.")
     ap.add_argument("--project", help="offer/project name (fuzzy-matched against dim_project.csv)")
     ap.add_argument("--stage", help="stage name (fuzzy-matched against dim_stage.csv)")
     ap.add_argument("--event-type", choices=derive.EVENT_TYPES)
@@ -210,6 +247,19 @@ def main() -> int:
         for s in stages:
             if derive.is_applicable(s, project.project_type):
                 print(f"{s.display_name}  (sla={s.sla_days}d)  id={s.stage_id}")
+        return 0
+
+    if args.staleness_report:
+        events = derive.load_events()
+        print_staleness_report(projects, events, args.days)
+        return 0
+
+    if args.status:
+        events = derive.load_events()
+        targets = [resolve_project(projects, args.project)] if args.project else \
+            [p for p in projects if p.project_status == "Active"]
+        for project in targets:
+            print_status(project, stages, events)
         return 0
 
     batch = []

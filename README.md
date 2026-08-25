@@ -67,6 +67,46 @@ Pushing to `main` triggers `.github/workflows/deploy.yml`, which runs
 in that path needs a server, a database, or IT-provisioned infrastructure --
 GitHub Actions is the backend.
 
+## The assistant drives coverage -- it doesn't just wait to be told
+
+Analysts won't reliably remember every open item on their own, so the
+protocol doesn't let the assistant sit passive. At the start of a session it
+runs `log_update.py --staleness-report` and leads with whatever's gone quiet
+("Rubrik and Cohesity haven't been touched in a while -- anything to
+report?") rather than waiting to be asked. At the end of a session it checks
+the same list against what actually got covered and follows up on anything
+missed. A flagged offer with genuinely nothing new gets logged as `No
+Change`, not silently skipped -- that distinction is what stops a stalled
+project and an unreported one from looking identical on the dashboard.
+
+## Review, mini-dashboard, and fixing mistakes
+
+- **Before committing anything**, the assistant always shows a one-line
+  plain-English draft and runs `--dry-run` first, which prints the exact
+  consequence -- new health/status/progress for that offer, plus any
+  dependency-consistency warnings -- so the analyst reviews the *meaning* of
+  the update, not a form field, before it's written.
+- **Checking status any time**, mid-conversation, with nothing being
+  updated: `python scripts/log_update.py --status --project "<offer>"`
+  prints that offer's current stage-by-stage breakdown right there in the
+  chat -- a mini-dashboard on demand, without opening the real one.
+- **Editing after the fact**: `data/events.csv` is append-only by design
+  (see below), so there's no "edit" or "delete" -- correcting a mistake
+  means logging a new event with `--correction-of <event_id>` pointing at
+  the row it fixes. The corrected event becomes the current truth
+  immediately (the dashboard always reads the latest event per stage); the
+  `correction_of` column just keeps *why* it changed visible in the log.
+
+## Is the data human-readable?
+
+Yes -- every file in `data/` is a plain CSV with ordinary column headers.
+Anyone can open `data/events.csv` or `data/dim_project.csv` directly in
+Excel and read it like any other spreadsheet; nothing about the pipeline
+requires special tooling to inspect. The only thing that's *append-only by
+convention* (never overwritten in place) is `events.csv` -- everything else
+(`dim_project.csv`, `dim_stage.csv`) is a normal small reference table meant
+to be hand-edited occasionally.
+
 ## Running the build locally
 
 ```

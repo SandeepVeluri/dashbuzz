@@ -306,6 +306,28 @@ def update_compliance_pct(projects: list[Project], events: list[dict], today: dt
     return round(fresh / len(active) * 100)
 
 
+def staleness_report(projects: list[Project], events: list[dict], today: dt.date) -> list[dict]:
+    """One row per active project: days since its last event (None = never
+    reported). Sorted worst-first. This is what lets an intake assistant ask
+    'you haven't updated X in N days -- anything to report?' instead of only
+    reacting to whatever the analyst happens to bring up."""
+    out = []
+    for p in projects:
+        if p.project_status != "Active":
+            continue
+        proj_events = [e for e in events if e["project_id"] == p.project_id and _is_date(e.get("actual_date"))]
+        if proj_events:
+            last = max(dt.date.fromisoformat(e["actual_date"]) for e in proj_events)
+            days = (today - last).days
+        else:
+            last, days = None, None
+        out.append(dict(project_id=p.project_id, offer=p.offer, last_event_date=last, days_since=days))
+    # Never-reported projects (days_since is None) are the most urgent -- sort them first,
+    # then everything else by days_since descending (staler first).
+    out.sort(key=lambda r: (r["days_since"] is not None, -(r["days_since"] or 0)))
+    return out
+
+
 def _is_date(s: str) -> bool:
     try:
         dt.date.fromisoformat(s)
